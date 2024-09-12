@@ -2,7 +2,7 @@
 
 Welcome to Flutter Geo OSM! This project is a Flutter application that utilizes OpenStreetMap (OSM) for geolocation and mapping functionalities.
 
-![Screenshot](assets\image.png){: width="50%"}
+<img src="assets/image.png" alt="Screenshot" width="300"/>
 
 ## Features
 
