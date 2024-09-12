@@ -19,7 +19,7 @@ class LocationPage extends StatefulWidget {
 class _LocationPageState extends State<LocationPage> {
   LatLng? _currentPosition;
   final MapController _mapController = MapController();
-  // double _distance = 0.0;
+  LatLng? _tappedPosition;
 
   @override
   void initState() {
@@ -51,18 +51,8 @@ class _LocationPageState extends State<LocationPage> {
     Position position = await Geolocator.getCurrentPosition();
     setState(() {
       _currentPosition = LatLng(position.latitude, position.longitude);
-      _calculateDistance();
     });
     _mapController.move(_currentPosition!, 15);
-  }
-
-  void _calculateDistance() {
-    if (_currentPosition != null &&
-        widget.latitude != null &&
-        widget.longitude != null) {
-      // _distance = Geolocator.distanceBetween(_currentPosition!.latitude,
-      //     _currentPosition!.longitude, widget.latitude!, widget.longitude!);
-    }
   }
 
   @override
@@ -89,6 +79,11 @@ class _LocationPageState extends State<LocationPage> {
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
               ),
+              onTap: (tapPosition, point) {
+                setState(() {
+                  _tappedPosition = point;
+                });
+              },
             ),
             children: [
               TileLayer(
@@ -116,6 +111,15 @@ class _LocationPageState extends State<LocationPage> {
                       ),
                     ),
                   ),
+                  if (_tappedPosition != null)
+                    Marker(
+                      point: _tappedPosition!,
+                      child: const Icon(
+                        Icons.push_pin,
+                        color: Colors.red,
+                        size: 30,
+                      ),
+                    ),
                 ],
               ),
             ],
@@ -126,8 +130,66 @@ class _LocationPageState extends State<LocationPage> {
             child: Container(
               padding: const EdgeInsets.all(8),
               color: Colors.white,
-              child: Text(
-                  'Latitude: ${_currentPosition?.latitude ?? widget.latitude}\nLongitude: ${_currentPosition?.longitude ?? widget.longitude}'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Current Position:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Latitude: ${_currentPosition?.latitude ?? widget.latitude}',
+                          style: const TextStyle(fontSize: 14),
+                        ), 
+                        Text(
+                          'Longitude: ${_currentPosition?.longitude ?? widget.longitude}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        SizedBox(height: 4),
+                        if (_tappedPosition != null) ...[
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Tapped Position:',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Latitude: ${_tappedPosition!.latitude}',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          Text(
+                            'Longitude: ${_tappedPosition!.longitude}',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
