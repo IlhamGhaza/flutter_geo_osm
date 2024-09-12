@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -20,6 +21,12 @@ class _LocationPageState extends State<LocationPage> {
   LatLng? _currentPosition;
   final MapController _mapController = MapController();
   LatLng? _tappedPosition;
+  TextEditingController _searchController = TextEditingController();
+
+  final LatLngBounds bounds = LatLngBounds(
+    LatLng(-90.0, -180.0), // Southwest corner
+    LatLng(90.0, 180.0), // Northeast corner
+  );
 
   @override
   void initState() {
@@ -54,6 +61,23 @@ class _LocationPageState extends State<LocationPage> {
     });
     _mapController.move(_currentPosition!, 15);
   }
+  Future<void> _searchLocation() async {
+    try {
+      List<Location> locations =
+          await locationFromAddress(_searchController.text);
+      if (locations.isNotEmpty) {
+        setState(() {
+          _tappedPosition =
+              LatLng(locations.first.latitude, locations.first.longitude);
+        });
+        _mapController.move(_tappedPosition!, 15);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Location not found')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +86,40 @@ class _LocationPageState extends State<LocationPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Location'),
+        backgroundColor: Colors.transparent,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              'Location',
+              style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search location',
+            fillColor: Colors.white,
+            filled: true,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+            suffixIcon: IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: _searchLocation,
+            ),
+          ),
+          onSubmitted: (_) => _searchLocation(),
+              ),
+            ),
+          ],
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
@@ -74,8 +131,8 @@ class _LocationPageState extends State<LocationPage> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: center,
-              initialZoom: 15.0,
-              maxZoom: 18.0,
+              minZoom: 0,
+              maxZoom: 20.0,
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
               ),
@@ -84,10 +141,22 @@ class _LocationPageState extends State<LocationPage> {
                   _tappedPosition = point;
                 });
               },
+              cameraConstraint: CameraConstraint.contain(
+                bounds: bounds,
+              ),
             ),
             children: [
               TileLayer(
                 urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                tileBuilder: (context, tileWidget, tile) {
+                  return ColorFiltered(
+                    colorFilter: const ColorFilter.mode(
+                      Colors.transparent,
+                      BlendMode.saturation,
+                    ),
+                    child: tileWidget,
+                  );
+                },
               ),
               MarkerLayer(
                 markers: [
