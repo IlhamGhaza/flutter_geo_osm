@@ -7,7 +7,7 @@ Welcome to Flutter Geo OSM! This project is a Flutter application utilizing Open
 ## Features
 
 - **Geolocation**: Get the user's current location using the device's GPS.
-- **Map Display**: Display a map with markers, polygons, and other overlays using OSM data.
+- **Map Display**: Display a map with markers.
 
 ## Prerequisites
 
